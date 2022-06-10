@@ -145,12 +145,13 @@ def gridGraphSeg(myImage, k):
 def buildNNGraph(myImage, nNeighbors):
     h = myImage.shape[0]
     w = myImage.shape[1]
-
     graph = [[[] for i in range(myImage.shape[1])]
              for j in range(myImage.shape[0])]
     edges = []
-    vertices = [[myImage[i][j][0], myImage[i][j][1], myImage[i][j][2], (i*255)/h, (j*255)/w]
-                for j in range(myImage.shape[1]) for i in range(myImage.shape[0])]
+
+    vertices = [[myImage[i][j][0], myImage[i][j][1], myImage[i][j][2], (i*256)/h, (j*256)/w]
+                for i in range(myImage.shape[0]) for j in range(myImage.shape[1])]
+
     X = np.array(vertices)
     nbrs = NearestNeighbors(n_neighbors=nNeighbors+1,
                             algorithm='ball_tree').fit(X)
@@ -162,10 +163,10 @@ def buildNNGraph(myImage, nNeighbors):
             for x in range(1, nNeighbors + 1):
                 neigh = (indices[c][x] % w, int(indices[c][x]/w))
 
-                if((i, j) not in [tup[0] for tup in graph[neigh[0]][neigh[1]]]):
+                if((j, i) not in [tup[0] for tup in graph[neigh[0]][neigh[1]]]):
                     graph[i][j].append(
                         (neigh, distances[c][x]))
-                    edges.append(((i, j), neigh, distances[c][x]))
+                    edges.append(((j, i), neigh, distances[c][x]))
 
     return graph, edges
 
@@ -213,11 +214,27 @@ else:
 
 result = np.zeros((h*w, 3))
 for i in range(len(finalSegs)):
-    colorR = np.random.randint(0, 256)
-    colorG = np.random.randint(0, 256)
-    colorB = np.random.randint(0, 256)
+    # colorR = np.random.randint(0, 256)
+    # colorG = np.random.randint(0, 256)
+    # colorB = np.random.randint(0, 256)
+    colorR = 0
+    colorB = 0
+    colorG = 0
+
+    for j in range(len(finalSegs[i])):
+        row = int(finalSegs[i][j] / w)
+        col = finalSegs[i][j] % w
+        colorR += myImage[row][col][2]
+        colorG += myImage[row][col][1]
+        colorB += myImage[row][col][0]
+
+    colorR = int(colorR/len(finalSegs[i]))
+    colorG = int(colorG/len(finalSegs[i]))
+    colorB = int(colorB/len(finalSegs[i]))
+
     for j in range(len(finalSegs[i])):
         result[finalSegs[i][j]] = [colorB, colorG, colorR]
+
 result = np.reshape(result, (h, w, 3))
 
 outputDir = os.path.abspath(os.path.join(opt.output, os.pardir))
