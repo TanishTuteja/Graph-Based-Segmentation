@@ -1,0 +1,4 @@
+numpy==1.19.5
+opencv_python==4.5.4.60
+scikit_learn==1.1.1
+unionfind==0.0.12
